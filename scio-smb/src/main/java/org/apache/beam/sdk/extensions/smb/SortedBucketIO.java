@@ -221,7 +221,7 @@ public class SortedBucketIO {
 
   public abstract static class DirectWrite<K, V> extends Write<K, V, V> {}
 
-  public abstract static class Write<K, U, V> extends PTransform<PCollection<V>, WriteResult> {
+  public abstract static class Write<K, V, T> extends PTransform<PCollection<V>, WriteResult> {
     abstract int getNumBuckets();
 
     abstract int getNumShards();
@@ -242,20 +242,20 @@ public class SortedBucketIO {
 
     abstract int getSorterMemoryMb();
 
-    abstract FileOperations<V> getFileOperations();
+    abstract FileOperations<T> getFileOperations();
 
     abstract BucketMetadata<K, V> getBucketMetadata();
 
     abstract int getKeyCacheSize();
 
     @Nullable
-    abstract BiFunction<K, Iterable<U>, Iterable<V>> getGroupMappingFn();
+    abstract BiFunction<K, Iterable<V>, Iterable<T>> getGroupMappingFn();
 
     @Nullable
-    abstract Coder<V> getOutputValueCoder();
+    abstract Coder<T> getOutputValueCoder();
 
-    public PreKeyedWrite<K, U, V> onKeyedCollection(Coder<V> valueCoder, boolean verifyKeyExtraction) {
-      return new PreKeyedWrite<K, U, V>(this, valueCoder, verifyKeyExtraction);
+    public PreKeyedWrite<K, V, T> onKeyedCollection(Coder<V> valueCoder, boolean verifyKeyExtraction) {
+      return new PreKeyedWrite<K, V, T>(this, valueCoder, verifyKeyExtraction);
     }
 
     @SuppressWarnings("unchecked")
@@ -269,23 +269,26 @@ public class SortedBucketIO {
         tempDirectory = outputDirectory;
       }
       return input.apply(
-          new SortedBucketSink<>(
+          new SortedBucketSink<K, V, T>(
               getBucketMetadata(),
               outputDirectory,
               tempDirectory,
               getFilenameSuffix(),
               getFileOperations(),
               getSorterMemoryMb(),
-              getKeyCacheSize()));
+              getKeyCacheSize(),
+              getGroupMappingFn(),
+              getOutputValueCoder())
+              );
     }
   }
 
-  public static class PreKeyedWrite<K, U, V> extends PTransform<PCollection<KV<K, V>>, WriteResult> {
-    private final Write<K, U, V> write;
+  public static class PreKeyedWrite<K, V, T> extends PTransform<PCollection<KV<K, V>>, WriteResult> {
+    private final Write<K, V, T> write;
     private final Coder<V> valueCoder;
     private final boolean verifyKeyExtraction;
 
-    public PreKeyedWrite(Write<K, U, V> write, Coder<V> valueCoder, boolean verifyKeyExtraction) {
+    public PreKeyedWrite(Write<K, V, T> write, Coder<V> valueCoder, boolean verifyKeyExtraction) {
       this.write = write;
       this.valueCoder = valueCoder;
       this.verifyKeyExtraction = verifyKeyExtraction;
@@ -302,7 +305,7 @@ public class SortedBucketIO {
         tempDirectory = outputDirectory;
       }
       return input.apply(
-          new SortedBucketPreKeyedSink<>(
+          new SortedBucketPreKeyedSink<K, V, T>(
               write.getBucketMetadata(),
               outputDirectory,
               tempDirectory,

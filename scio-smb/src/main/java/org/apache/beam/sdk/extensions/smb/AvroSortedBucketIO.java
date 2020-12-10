@@ -71,6 +71,11 @@ public class AvroSortedBucketIO {
     return AvroSortedBucketIO.newBuilder(keyClass, keyField).setSchema(schema).build();
   }
 
+  public static <K, U extends SpecificRecordBase> Write<K, U, U> write(
+         Class<K> keyClass, String keyField, Class<U>  recordClassU) {
+    return write(keyClass, keyField, recordClassU, recordClassU);
+  }
+
   /** Returns a new {@link Write} for Avro specific records. */
   public static <K, U extends SpecificRecordBase, T extends SpecificRecordBase> Write<K, U, T> write(
       Class<K> keyClass, String keyField, Class<U> recordClassU, Class<T> recordClassT) {
@@ -322,7 +327,7 @@ public class AvroSortedBucketIO {
 
     @SuppressWarnings("unchecked")
     @Override
-    BucketMetadata<K, T> getBucketMetadata() {
+    BucketMetadata<K, U> getBucketMetadata() {
       try {
         return getRecordClass() == null
             ? new AvroBucketMetadata<>(
@@ -333,7 +338,7 @@ public class AvroSortedBucketIO {
                 getKeyField(),
                 getFilenamePrefix(),
                 getSchema())
-            : (AvroBucketMetadata<K, T>)
+            : (AvroBucketMetadata<K, U>)
                 new AvroBucketMetadata<>(
                     getNumBuckets(),
                     getNumShards(),

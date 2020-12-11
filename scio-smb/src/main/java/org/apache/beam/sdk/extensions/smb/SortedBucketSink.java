@@ -194,12 +194,6 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
         input.isBounded() == IsBounded.BOUNDED,
         "SortedBucketSink cannot be applied to a non-bounded PCollection");
     final Coder<V> inputValueCoder = input.getCoder();
-    Coder<T> effectiveOutputValueCoder = outputValueCoder;
-    // if group mapping function is not present then type V and type T must be the same.
-    // Hence following is a safe cast.
-    if(groupMappingFn == null) {
-      effectiveOutputValueCoder = (Coder<T>) inputValueCoder;
-    }
 
     final PCollection<KV<BucketShardId, KV<byte[], V>>> bucketedInput =
         input.apply(
@@ -212,7 +206,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
         bucketedInput,
         getName(),
         inputValueCoder,
-        effectiveOutputValueCoder,
+        outputValueCoder,
         sorterMemoryMb,
         filenamePolicy,
         fileOperations,
@@ -233,6 +227,12 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
       ResourceId tempDirectory,
       SerializableBiFunction<KeyT, Iterable<ValueV>, Iterable<ValueT>> groupMappingFn) {
 
+    Coder<ValueT> effectiveOutputValueCoder = outputValueCoder;
+    // if group mapping function is not present then type V and type T must be the same.
+    // Hence following is a safe cast.
+    if(groupMappingFn == null) {
+      effectiveOutputValueCoder = (Coder<ValueT>) inputValueCoder;
+    }
 
     return bucketedInput
         .setCoder(
@@ -257,7 +257,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
         .apply(
             "WriteOperation",
             new WriteOperation<>(
-                filenamePolicy, bucketMetadata, fileOperations, tempDirectory, outputValueCoder));
+                filenamePolicy, bucketMetadata, fileOperations, tempDirectory, effectiveOutputValueCoder));
   }
 
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
@@ -789,8 +789,10 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
     private final FileOperations<T> fileOperations;
     private final int sorterMemoryMb;
     private final int keyCacheSize;
-    private final Coder<V> valueCoder;
+    private final Coder<V> inputValueCoder;
     private final boolean verifyKeyExtraction;
+    private final SerializableBiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn;
+    private final Coder<T> outputValueCoder;
 
     public SortedBucketPreKeyedSink(
         BucketMetadata<K, V> bucketMetadata,
@@ -799,7 +801,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
         String filenameSuffix,
         FileOperations<T> fileOperations,
         int sorterMemoryMb,
-        Coder<V> valueCoder) {
+        Coder<V> inputValueCoder) {
       this(
           bucketMetadata,
           outputDirectory,
@@ -807,7 +809,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
           filenameSuffix,
           fileOperations,
           sorterMemoryMb,
-          valueCoder,
+          inputValueCoder,
           true);
     }
 
@@ -818,7 +820,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
         String filenameSuffix,
         FileOperations<T> fileOperations,
         int sorterMemoryMb,
-        Coder<V> valueCoder,
+        Coder<V> inputValueCoder,
         boolean verifyKeyExtraction) {
       this(
           bucketMetadata,
@@ -827,9 +829,11 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
           filenameSuffix,
           fileOperations,
           sorterMemoryMb,
-          valueCoder,
+              inputValueCoder,
           verifyKeyExtraction,
-          0);
+          0,
+          null,
+          null);
     }
 
     public SortedBucketPreKeyedSink(
@@ -839,9 +843,11 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
         String filenameSuffix,
         FileOperations<T> fileOperations,
         int sorterMemoryMb,
-        Coder<V> valueCoder,
+        Coder<V> inputValueCoder,
         boolean verifyKeyExtraction,
-        int keyCacheSize) {
+        int keyCacheSize,
+        SerializableBiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn,
+        Coder<T> outputValueCoder) {
       this.bucketMetadata = bucketMetadata;
       this.filenamePolicy =
           new SMBFilenamePolicy(
@@ -851,7 +857,9 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
       this.sorterMemoryMb = sorterMemoryMb;
       this.keyCacheSize = keyCacheSize;
       this.verifyKeyExtraction = verifyKeyExtraction;
-      this.valueCoder = valueCoder;
+      this.inputValueCoder = inputValueCoder;
+      this.groupMappingFn = groupMappingFn;
+      this.outputValueCoder = outputValueCoder;
     }
 
     @Override
@@ -895,14 +903,14 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
       return SortedBucketSink.sink(
           bucketedInput,
           getName(),
-          valueCoder,
-          (Coder<T>) valueCoder,
+          inputValueCoder,
+          outputValueCoder,
           sorterMemoryMb,
           filenamePolicy,
           fileOperations,
           bucketMetadata,
           tempDirectory,
-          null);
+          groupMappingFn);
     }
   }
 }

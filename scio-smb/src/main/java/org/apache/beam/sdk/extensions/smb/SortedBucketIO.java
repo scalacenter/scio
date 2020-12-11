@@ -312,7 +312,9 @@ public class SortedBucketIO {
               write.getSorterMemoryMb(),
               valueCoder,
               verifyKeyExtraction,
-              write.getKeyCacheSize()));
+              write.getKeyCacheSize(),
+              write.getGroupMappingFn(),
+              write.getOutputValueCoder()));
     }
   }
 }

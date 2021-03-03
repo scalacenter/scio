@@ -80,7 +80,7 @@ object IsJavaBean {
     '{new IsJavaBean[T]{}}
   }
 
-  inline given isJavaBean[T] as IsJavaBean[T] = {
+  inline given isJavaBean[T]: IsJavaBean[T] = {
     ${ isJavaBeanImpl[T] }
   }
 

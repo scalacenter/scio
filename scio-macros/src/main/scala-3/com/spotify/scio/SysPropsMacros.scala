@@ -26,21 +26,17 @@ object SysPropsMacros {
   inline def propertiesIn[T <: SysProps](inline self: T): List[SysProp] = 
     ${ propertiesInImpl('self) }
 
-  def propertiesInImpl[T <: SysProps : Type](self: Expr[T])(using quotes: Quotes): Expr[List[SysProp]] ={
-    import quotes.reflect._
-    val typeOfSubclass = TypeTree.of[T]
-    val sym = typeOfSubclass.symbol
-    val typesOfVals: List[TypeRepr] = sym.memberFields.map(_.tree).collect { 
-      case vd: ValDef => vd.tpt.tpe
-    }
-    val props: List[Symbol] = sym.memberFields.filter(_.tree match {
-      case vd: ValDef => vd.tpt.tpe.typeSymbol == TypeRepr.of[SysProp].typeSymbol
-      case _ => false
-    })
-    val x = Ident(props.head)
-      
-    println(props)
-    '{Nil}
+  def propertiesInImpl[T <: SysProps : Type](self: Expr[T])(using Quotes): Expr[List[SysProp]] ={
+    import scala.quoted.quotes.reflect.*
+    
+    val tp = TypeRepr.of[T]
+    val sym = tp.typeSymbol
+    
+    // TODO: test inheritance with this! use sym.declaredFields if we don't want to get inherited fields?
+    val props: List[Symbol] = sym.memberFields
+      .filter(fieldSym => tp.memberType(fieldSym) <:< TypeRepr.of[SysProp])
+    val propRefs: List[Expr[SysProp]] = props.map(fieldSym => Ref(fieldSym).asExprOf[SysProp])
+    Expr.ofList(propRefs)
   }
 }
 

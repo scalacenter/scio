@@ -14,7 +14,20 @@ final case class SysProp(flag: String, description: String) {
     s"-D$flag=<String>\n\t$description"
 }
 
-trait SysProps {
+/**
+ * Common interface for Scala 2 and Scala 3 SysProps implementations. To write
+ * a cross-compatible object extending SysProps:
+ *
+ * {{{
+ * @registerSysProps
+ * object MySysProps extends SysProps {
+ *   val MyProp = SysProp("...", "...")
+ * }
+ * }}}
+ *
+ * @see com.spotify.scio.SysProps
+ */
+private[scio] trait AbstractSysProps {
   def properties: List[SysProp]
 
   def show: String = {

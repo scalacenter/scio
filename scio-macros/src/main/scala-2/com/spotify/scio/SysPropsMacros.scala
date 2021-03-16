@@ -31,8 +31,6 @@ private object registerSysPropsMacro {
   def impl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val traitT = tq"_root_.com.spotify.scio.SysProps"
-
     annottees.map(_.tree) match {
       case List(q"$mod object $name extends ..$parents { ..$body }") =>
         val vars = body.collect { case ValDef(_, _, _, rhs) =>
@@ -43,7 +41,7 @@ private object registerSysPropsMacro {
           q"""override def properties: List[SysProp] = List(..$vars)"""
 
         c.Expr[Any](q"""
-            $mod object $name extends ..$parents with $traitT {
+            $mod object $name extends ..$parents {
               $propertiesMethod
               ..$body
             }

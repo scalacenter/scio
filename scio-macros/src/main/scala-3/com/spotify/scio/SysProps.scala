@@ -8,4 +8,4 @@ trait SysProps extends AbstractSysProps {
  * This annotation does nothing on Scala 3, it is only used for cross-compatibility
  * with Scala 2.
  */
-final class registerSysProps extends StaticAnnotation
+final class registerSysProps extends scala.annotation.StaticAnnotation

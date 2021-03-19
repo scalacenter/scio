@@ -565,7 +565,7 @@ lazy val `scio-macros`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ),
     libraryDependencies ++= {
       if (!isDotty.value)
         Seq(
@@ -1396,4 +1396,4 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.xerial.snappy" % "snappy-java" % "1.1.4",
   "org.yaml" % "snakeyaml" % "1.12",
   "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
-)
+).map(_.withDottyCompat(scalaVersion.value))

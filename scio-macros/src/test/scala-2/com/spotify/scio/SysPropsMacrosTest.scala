@@ -1,15 +1,14 @@
 package com.spotify.scio
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.funsuite.AnyFunSuite
 
-class SysPropsMacrosTest extends AnyFlatSpec with Matchers {
+class SysPropsMacrosTest extends AnyFunSuite {
   @registerSysProps
   object TestSysProps1 extends SysProps {
     val TmpDir: SysProp = SysProp("java.io.tmpdir", "java temporary directory")
   }
 
-  "TestSysProps1" should "have one SysProp" in {
+  test("TestSysProps1 should have one SysProp") {
     assert(TestSysProps1.properties.size == 1)
   }
 }

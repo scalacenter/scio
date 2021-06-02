@@ -629,9 +629,6 @@ lazy val `scio-avro`: Project = project
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
     ).map(_.cross(CrossVersion.for3Use2_13)),
-    scalacOptions ++= {
-      if (scalaVersion.value.startsWith("3")) Seq("-source:3.0-migration") else Nil
-    },
   )
   .dependsOn(
     `scio-core` % "compile;it->it"

@@ -25,7 +25,7 @@ import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
 
-val scala3Version = "3.0.0-RC2"
+val scala3Version = "3.0.0"
 val algebirdVersion = "0.13.7"
 val algebraVersion = "2.2.2"
 val annoy4sVersion = "0.10.0"
@@ -97,7 +97,7 @@ val protobufVersion = "3.15.8"
 val scalacheckVersion = "1.15.4"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
-val scalatestVersion = "3.2.8"
+val scalatestVersion = "3.2.9"
 val shapelessVersion = "2.3.4"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.2.1"
@@ -162,12 +162,12 @@ val commonSettings = Def
         Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
       }
     },
-    coverageExcludedPackages := (Seq(
-      "com\\.spotify\\.scio\\.examples\\..*",
-      "com\\.spotify\\.scio\\.repl\\..*",
-      "com\\.spotify\\.scio\\.util\\.MultiJoin"
-    ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
-    coverageHighlighting := true,
+    //coverageExcludedPackages := (Seq(
+    //  "com\\.spotify\\.scio\\.examples\\..*",
+    //  "com\\.spotify\\.scio\\.repl\\..*",
+    //  "com\\.spotify\\.scio\\.util\\.MultiJoin"
+    //) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
+    //coverageHighlighting := true,
     licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
     homepage := Some(url("https://github.com/spotify/scio")),
     scmInfo := Some(
@@ -584,7 +584,8 @@ lazy val `scio-macros`: Project = project
     libraryDependencies ++= Seq(
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.avro" % "avro" % avroVersion
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
     // Scala 2 dependencies
     libraryDependencies ++= {
